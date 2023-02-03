@@ -6,7 +6,7 @@ import fs from 'fs';
 import Checkpoint, { LogLevel } from '@snapshot-labs/checkpoint';
 import config from './config.json';
 import * as writers from './writers';
-import BridgeAbi from './bridge.json';
+import BridgeAbi from './abi/bridge.json';
 
 const dir = __dirname.endsWith('dist/src') ? '../' : '';
 const schemaFile = path.join(__dirname, `${dir}../src/schema.gql`);
