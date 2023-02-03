@@ -6,26 +6,26 @@ import fs from 'fs';
 import Checkpoint, { LogLevel } from '@snapshot-labs/checkpoint';
 import config from './config.json';
 import * as writers from './writers';
-import checkpointBlocks from './checkpoints.json';
+import BridgeAbi from './bridge.json';
 
 const dir = __dirname.endsWith('dist/src') ? '../' : '';
 const schemaFile = path.join(__dirname, `${dir}../src/schema.gql`);
 const schema = fs.readFileSync(schemaFile, 'utf8');
 
 const checkpointOptions = {
-  logLevel: LogLevel.Info
-  // prettifyLogs: true, // uncomment in local dev
+  logLevel: LogLevel.Info,
+  prettifyLogs: process.env.NODE_ENV !== 'production',
+  abis: {
+    Bridge: BridgeAbi,
+  },
 };
 
 // Initialize checkpoint
 // @ts-ignore
 const checkpoint = new Checkpoint(config, writers, schema, checkpointOptions);
 
-// resets the entities already created in the database
-// ensures data is always fresh on each re-run
 checkpoint
   .reset()
-  .then(() => checkpoint.seedCheckpoints(checkpointBlocks))
   .then(() => {
     // start the indexer
     checkpoint.start();

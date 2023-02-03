@@ -5,49 +5,94 @@ export async function handleDeploy() {
   // Run logic as at the time Contract was deployed.
 }
 
-// This decodes the new_post events data and stores successfully
-// decoded information in the `posts` table.
-//
-// See here for the original logic used to create post transactions:
-// https://gist.github.com/perfectmak/417a4dab69243c517654195edf100ef9#file-index-ts
-export async function handleNewPost({ block, tx, event, mysql }: Parameters<CheckpointWriter>[0]) {
-  if (!event) return;
+// Function that will get called on every deposit event
+export const handleDeposit: CheckpointWriter = async ({ block, tx, rawEvent, event, mysql }) => {
+  if (!rawEvent || !event) return;
 
-  const author = toAddress(event.data[0]);
-  let content = '';
-  let tag = '';
-  const contentLength = BigInt(event.data[1]);
-  const tagLength = BigInt(event.data[2 + Number(contentLength)]);
-  const timestamp = block.timestamp;
-  const blockNumber = block.block_number;
+  // Compute the amount
+  const bigAmount = BigInt(event.amount.high) * BigInt(2) ** BigInt(128) + BigInt(event.amount.low);
+  const amount = Number(bigAmount * 100000n / (10n ** 18n)) / 100000;
 
-  // parse content bytes
-  try {
-    content = hexStrArrToStr(event.data, 2, contentLength);
-  } catch (e) {
-    console.error(`failed to decode content on block [${blockNumber}]: ${e}`);
-    return;
-  }
+  const timestamp = block.timestamp * 1000; // milliseconds instead of seconds
+  const date = new Date(timestamp);
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+  const monthId = `${year}/${month}`;
+  const day = date.getUTCDate();
+  const dayId = `${monthId}/${day}`;
 
-  // parse tag bytes
-  try {
-    tag = hexStrArrToStr(event.data, 3 + Number(contentLength), tagLength);
-  } catch (e) {
-    console.error(`failed to decode tag on block [${blockNumber}]: ${e}`);
-    return;
-  }
-
-  // post object matches fields of Post type in schema.gql
-  const post = {
-    id: `${author}/${tx.transaction_hash}`,
-    author,
-    content,
-    tag,
-    tx_hash: tx.transaction_hash,
-    created_at: timestamp,
-    created_at_block: blockNumber
+  // Create the monthly metric object
+  const monthlyMetric = {
+    id: monthId,
+    deposit_count: 1,
+    deposit_amount: amount,
+    withdrawal_count: 0,
+    withdrawal_amount: 0.0,
+    month,
+    year,
   };
 
-  // table names are `lowercase(TypeName)s` and can be interacted with sql
-  await mysql.queryAsync('INSERT IGNORE INTO posts SET ?', [post]);
+  // Create the daily metric object
+  const dailyMetric = {
+    id: dayId,
+    deposit_count: 0,
+    deposit_amount: 0.0,
+    withdrawal_count: 1,
+    withdrawal_amount: amount,
+    day,
+    month,
+    year,
+  };
+
+  // Try inserting the monthly metric object and the daily metric object. If they already exist, simple update them!
+  // Table names are `lowercase(TypeName)s` and can be interacted with sql
+  const query = `
+  INSERT INTO monthlymetrics SET ? ON DUPLICATE KEY UPDATE deposit_count = deposit_count + 1, deposit_amount = deposit_amount + ?;
+  INSERT INTO dailymetrics SET ? ON DUPLICATE KEY UPDATE deposit_count = deposit_count + 1, deposit_amount = deposit_amount + ?;
+  `;
+
+  await mysql.queryAsync(query, [monthlyMetric, amount, dailyMetric, amount]);
+}
+
+// Same logic as handleDeposit except we switch which rows we update
+export const handleWithdrawal: CheckpointWriter = async ({ block, tx, rawEvent, event, mysql }) => {
+  if (!rawEvent || !event) return;
+
+  const bigAmount = BigInt(event.amount.high) * 2n ** 128n + BigInt(event.amount.low);
+  const amount = Number(bigAmount * 100000n / (10n ** 18n)) / 100000;
+  const timestamp = block.timestamp * 1000; // milliseconds vs seconds
+  const date = new Date(timestamp);
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+  const monthId = `${year}/${month}`;
+  const day = date.getUTCDate();
+  const dayId = `${monthId}/${day}`;
+
+  const monthlyMetric = {
+    id: monthId,
+    deposit_count: 0,
+    deposit_amount: 0.0,
+    withdrawal_count: 1,
+    withdrawal_amount: amount,
+    month,
+    year,
+  };
+  
+  const dailyMetric = {
+    id: dayId,
+    deposit_count: 0,
+    deposit_amount: 0.0,
+    withdrawal_count: 1,
+    withdrawal_amount: amount,
+    day,
+    month,
+    year,
+  };
+
+  const query = `
+  INSERT INTO monthlymetrics SET ? ON DUPLICATE KEY UPDATE withdrawal_count = withdrawal_count + 1, withdrawal_amount = withdrawal_amount + ?;
+  INSERT INTO dailymetrics SET ? ON DUPLICATE KEY UPDATE withdrawal_count = withdrawal_count + 1, withdrawal_amount = withdrawal_amount + ?;
+  `;
+
+  await mysql.queryAsync(query, [monthlyMetric, amount, dailyMetric, amount]);
 }

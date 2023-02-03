@@ -1,14 +1,18 @@
 {
-  "network_node_url": "https://starknet-goerli.infura.io/v3/46a5dd9727bf48d4a132672d3f376146",
+  "network_node_url": "https://starknet-mainnet.infura.io/v3/{your-infura-token-here}",
   "sources": [
     {
-      "contract": "0x04d10712e72b971262f5df09506bbdbdd7f729724030fa909e8c8e7ac2fd0012",
-      "start": 185778,
-      "deploy_fn": "handleDeploy",
+      "contract": "0x073314940630fd6dcda0d772d4c972c4e0a9946bef9dabf4ef84eda8ef542b82",
+      "abi": "Bridge",
+      "start": 1470,
       "events": [
         {
-          "name": "new_post",
-          "fn": "handleNewPost"
+          "name": "withdraw_initiated",
+          "fn": "handleWithdrawal"
+        },
+        {
+           "name": "deposit_handled",
+           "fn": "handleDeposit"
         }
       ]
     }
