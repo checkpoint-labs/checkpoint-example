@@ -24,9 +24,7 @@ export const handleDeposit: CheckpointWriter = async ({ block, rawEvent, event, 
     deposit_count: 1,
     deposit_amount: amount,
     withdrawal_count: 0,
-    withdrawal_amount: 0,
-    month,
-    year
+    withdrawal_amount: 0
   };
 
   // Create the monthly metric object
@@ -84,9 +82,7 @@ export const handleWithdrawal: CheckpointWriter = async ({ block, rawEvent, even
     deposit_count: 0,
     deposit_amount: 0,
     withdrawal_count: 1,
-    withdrawal_amount: amount,
-    month,
-    year
+    withdrawal_amount: amount
   };
 
   const monthlyMetric = {
