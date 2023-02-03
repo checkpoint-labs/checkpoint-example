@@ -20,20 +20,18 @@ const checkpointOptions = {
   logLevel: LogLevel.Info,
   prettifyLogs: process.env.NODE_ENV !== 'production',
   abis: {
-    Bridge: BridgeAbi,
-  },
+    Bridge: BridgeAbi
+  }
 };
 
 // Initialize checkpoint
 // @ts-ignore
 const checkpoint = new Checkpoint(config, writers, schema, checkpointOptions);
 
-checkpoint
-  .reset()
-  .then(() => {
-    // start the indexer
-    checkpoint.start();
-  });
+checkpoint.reset().then(() => {
+  // start the indexer
+  checkpoint.start();
+});
 
 const app = express();
 app.use(express.json({ limit: '4mb' }));
