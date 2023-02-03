@@ -6,30 +6,32 @@ import fs from 'fs';
 import Checkpoint, { LogLevel } from '@snapshot-labs/checkpoint';
 import config from './config.json';
 import * as writers from './writers';
-import BridgeAbi from './bridge.json';
+import BridgeAbi from './abi/bridge.json';
 
 const dir = __dirname.endsWith('dist/src') ? '../' : '';
 const schemaFile = path.join(__dirname, `${dir}../src/schema.gql`);
 const schema = fs.readFileSync(schemaFile, 'utf8');
 
+if (process.env.NETWORK_NODE_URL) {
+  config.network_node_url = process.env.NETWORK_NODE_URL;
+}
+
 const checkpointOptions = {
   logLevel: LogLevel.Info,
   prettifyLogs: process.env.NODE_ENV !== 'production',
   abis: {
-    Bridge: BridgeAbi,
-  },
+    Bridge: BridgeAbi
+  }
 };
 
 // Initialize checkpoint
 // @ts-ignore
 const checkpoint = new Checkpoint(config, writers, schema, checkpointOptions);
 
-checkpoint
-  .reset()
-  .then(() => {
-    // start the indexer
-    checkpoint.start();
-  });
+checkpoint.reset().then(() => {
+  // start the indexer
+  checkpoint.start();
+});
 
 const app = express();
 app.use(express.json({ limit: '4mb' }));

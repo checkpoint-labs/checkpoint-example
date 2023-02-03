@@ -1,3 +1,11 @@
+type Metric {
+  id: String!
+  deposit_count: Int!
+  deposit_amount: Float!
+  withdrawal_count: Int!
+  withdrawal_amount: Float!
+}
+
 type MonthlyMetric {
   id: String!
   deposit_count: Int!
