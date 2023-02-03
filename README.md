@@ -1,65 +1,51 @@
-# Checkpoint starter template
+# SX-API
 
-This is a template to quickly get started to use [Checkpoint](https://docs.checkpoint.fyi)
-to expose a GraphQL API to query data from your StarkNet contracts.
+This API uses Checkpoint to index Snapshot X spaces information on StarkNet.
 
-## Getting started
+For more about how checkpoint works, refer to its documentation.
 
-This starter project contains logic to index events from a StarkNet Poster contract that is defined in the
-[starknet-poster](https://github.com/snapshot-labs/starknet-poster/blob/master/contracts/Poster.cairo) repository.
+## Getting Started (Local Development)
 
-Create a copy of this repository by clicking **'Use this template'** button or clicking [this
-link](https://github.com/snapshot-labs/checkpoint-template/generate).
+This API depends on a couple of services:
 
-**Requirements**
+- Node.js (>= v16.0.0)
+- MySQL (v8.0)
+- Starknet Provider (optional).
 
-- Node.js (>= 16.x.x)
-- Docker with `docker-compose`
-- Yarn
+To get start, first install all dependencies with:
 
-> You can also use npm, just make sure to replace the subsequent 'yarn' commands with their npm equivalent.
+```sh
+yarn
 
-After cloning this project, run the following command to install dependencies:
-
-```bash
-yarn # or 'npm install'
 ```
 
-Next, you'll need a MySQL server running and a connection string available as environment variable `DATABASE_URL`.
-You can use `docker-compose` to set up default MySQL server in container:
+Next, you need to have a MySQL server running and accessible. You can use the docker-compose service to start one up quickly with:
 
-```bash
-docker-compose up -d
+```sh
+docker compose up mysql # this will start mysql on port 3306
 ```
 
-> For local development, you can create a .env file from the .env.example file and the application will read the values on startup.
+Next, make a copy of `.env.example` and rename it as `.env`. Then update the credentials in the file to the correct values for your
+local setup.
 
-Next, start up the server:
+> Note: If using docker compose to start dependencies then the default .env.example value should be okay as it is.
 
-```bash
-yarn dev # for local development or else `yarn start` for production build.
+Finally, to run the service you do:
+
+```sh
+yarn dev
 ```
 
-This will expose a GraphQL API endpoint locally at http://localhost:3000. You can easily interact with this endpoint using the graphiql interface by visiting http://localhost:3000 in your browser.
+This should start the service to be listening on port 3000.
 
-To fetch a list of Post's try the following query:
+### Running Tests
 
-```graphql
-query {
-  posts {
-    id
-    author
-    content
-    tag
-    created_at_block
-    created_at
-    tx_hash
-  }
-}
+Before running tests, ensure you have MySQL server running (see getting started guide for some pointer to do this).
+
+Next, run:
+
+```
+yarn test
 ```
 
-To learn more about the different ways you can query the GraphQL API, visit the Checkpoint documentation [here](https://docs.checkpoint.fyi/core-concepts/entity-schema).
-
-## License
-
-MIT
+This will run all tests.
